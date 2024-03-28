@@ -6,9 +6,6 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import com.boris.spring.login.models.User;
 
-
-
-
 public interface UserRepository extends MongoRepository<User, String> {
   Optional<User> findByUsername(String username);
 
