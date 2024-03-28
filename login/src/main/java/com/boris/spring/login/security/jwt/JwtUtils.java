@@ -22,17 +22,17 @@ import io.jsonwebtoken.security.Keys;
 public class JwtUtils {
   private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
-  @Value("${spring.app.jwtSecret")
+  @Value("${spring.app.jwtSecret}")
   private String jwtSecret;
 
   @Value("${spring.app.jwtExpirationMs}")
   private int jwtExpirationMs;
 
   @Value("${spring.app.jwtCookieName}")
-  private String jwtCookie;
+  private String jwtCookieName;
 
   public String getJwtFromCookies(HttpServletRequest request) {
-    Cookie cookie = WebUtils.getCookie(request, jwtCookie);
+    Cookie cookie = WebUtils.getCookie(request, jwtCookieName);
     if (cookie != null) {
       return cookie.getValue();
     } else {
@@ -42,12 +42,12 @@ public class JwtUtils {
 
   public ResponseCookie generateJwtCookie(UserDetailsImpl userPrincipal) {
     String jwt = generateTokenFromUsername(userPrincipal.getUsername());
-    ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt).path("/api").maxAge(24 * 60 * 60).httpOnly(true).build();
+    ResponseCookie cookie = ResponseCookie.from(jwtCookieName, jwt).path("/api").maxAge(24 * 60 * 60).httpOnly(true).build();
     return cookie;
   }
 
   public ResponseCookie getCleanJwtCookie() {
-    ResponseCookie cookie = ResponseCookie.from(jwtCookie, null).path("/api").build();
+    ResponseCookie cookie = ResponseCookie.from(jwtCookieName, null).path("/api").build();
     return cookie;
   }
 
