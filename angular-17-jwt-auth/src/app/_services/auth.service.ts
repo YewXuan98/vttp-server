@@ -20,6 +20,7 @@ export class AuthService {
   private isAuthenticated = new BehaviorSubject<boolean>(
     this.storageService.isLoggedIn()
   );
+  errorMessage = '';
   constructor(
     private http: HttpClient,
     private storageService: StorageService,
@@ -64,7 +65,7 @@ export class AuthService {
     return this.http.post(AUTH_API + 'signout', {}, httpOptions);
   }
 
-  refreshToken() {
+  refreshToken(): Observable<any> {
     const refreshToken = this.storageService.getToken();  
     return this.http.post(AUTH_API + 'refreshtoken', { token: refreshToken}, httpOptions).pipe(
       tap(() => {
@@ -85,9 +86,29 @@ export class AuthService {
         return;
       }
 
+      if (this.storageService.isLoggedIn() && this.storageService.isTokenExpired()) {
+            this.refreshToken().subscribe({
+              next: data => {
+                this.storageService.saveToken(data.jwt); 
+              },
+              error: err => {
+                this.errorMessage = err.error.message;
+
+              }
+            });
+        }
+
       const isTokenExpired = this.storageService.isTokenExpired(); // Implement this method in storageService
       if (isTokenExpired) {
-        this.refreshToken().subscribe();
+        this.refreshToken().subscribe({
+          next: data => {
+            this.storageService.saveToken(data.jwt); 
+          },
+          error: err => {
+            this.errorMessage = err.error.message;
+
+          }
+        });
       }
     });
   }

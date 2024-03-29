@@ -16,6 +16,7 @@ export class AppComponent {
   showAdminBoard = false;
   showModeratorBoard = false;
   username?: string;
+  errorMessage = '';
 
   eventBusSub?: Subscription;
 
@@ -28,7 +29,18 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.isLoggedIn = this.storageService.isLoggedIn();
-   
+
+    if (this.storageService.isLoggedIn() && this.storageService.isTokenExpired()) {
+      this.authService.refreshToken().subscribe({
+        next: data => {
+          this.storageService.saveToken(data.jwt); 
+        },
+        error: err => {
+          this.errorMessage = err.error.message;
+
+        }
+      });
+  }
 
     if (this.isLoggedIn) {
       const user = this.storageService.getUser();
@@ -46,19 +58,7 @@ export class AppComponent {
     });
   }
 
-  // logout(): void {
-  //   this.authService.logout().subscribe({
-  //     next: res => {
-  //       console.log(res);
-  //       this.storageService.clean();
 
-  //       window.location.reload();
-  //     },
-  //     error: err => {
-  //       console.log(err);
-  //     }
-  //   });
-  // }
   logout(): void {
     this.authService.logout().subscribe({
       next: res => {

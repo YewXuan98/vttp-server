@@ -23,6 +23,12 @@ export class HttpRequestInterceptor implements HttpInterceptor {
       withCredentials: true,
     });
 
+    if (!req.url.includes('auth/signin') && !req.url.includes('auth/refreshtoken')) {
+      if (this.storageService.isLoggedIn() && this.storageService.isTokenExpired()) {
+          return this.handle401Error(req, next);
+      }
+  }
+
     return next.handle(req).pipe(
       catchError((error) => {
         if (
@@ -60,6 +66,8 @@ export class HttpRequestInterceptor implements HttpInterceptor {
         );
       }
     }
+
+    
   
     return next.handle(request);
   }
