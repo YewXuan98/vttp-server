@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.boris.spring.login.exception.TokenRefreshException;
 import com.boris.spring.login.models.RefreshToken;
@@ -34,7 +33,8 @@ public class RefreshTokenService {
   public RefreshToken createRefreshToken(String userId) {
     RefreshToken refreshToken = new RefreshToken();
 
-    refreshToken.setUser(userRepository.findByUsername(userId).get());
+    User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with id " + userId));
+    refreshToken.setUser(user);
     refreshToken.setExpiryDate(Instant.now().plusMillis(refreshTokenDurationMs));
     refreshToken.setToken(UUID.randomUUID().toString());
 
@@ -50,8 +50,9 @@ public class RefreshTokenService {
 
     return token;
   }
-
-  public long deleteByUserId(User user) {
-    return refreshTokenRepository.deleteByUser(user);
+  public void deleteByUserId(String userId) {
+    // Handling the case where the user might not be found
+    User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found with id " + userId));
+    refreshTokenRepository.deleteByUser(user);
   }
 }

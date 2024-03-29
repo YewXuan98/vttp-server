@@ -50,17 +50,18 @@ public class JwtUtils {
     return generateCookie(jwtCookie, jwt, "/api");
   }
   
-  public ResponseCookie generateJwtCookie(User user) {
-    String jwt = generateTokenFromUsername(user.getUsername());   
-    return generateCookie(jwtCookie, jwt, "/api");
-  }
+  // public ResponseCookie generateJwtCookie(User user) {
+  //   String jwt = generateTokenFromUsername(user.getUsername());   
+  //   return generateCookie(jwtCookie, jwt, "/api");
+  // }
   
   public ResponseCookie generateRefreshJwtCookie(String refreshToken) {
     return generateCookie(jwtRefreshCookie, refreshToken, "/api/auth/refreshtoken");
   }
   
   public String getJwtFromCookies(HttpServletRequest request) {
-    return getCookieValueByName(request, jwtCookie);
+    String token = getCookieValueByName(request, jwtCookie);
+    return token;
   }
   
   public String getJwtRefreshFromCookies(HttpServletRequest request) {
@@ -87,6 +88,10 @@ public class JwtUtils {
   }
   
   public boolean validateJwtToken(String authToken) {
+  //   if (authToken == null || authToken.trim().isEmpty()) {
+  //     logger.error("Invalid JWT token: Token is null or empty");
+  //     return false;
+  // }
     try {
       Jwts.parserBuilder().setSigningKey(key()).build().parse(authToken);
       return true;

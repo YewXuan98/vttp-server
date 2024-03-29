@@ -41,30 +41,57 @@ export class HttpRequestInterceptor implements HttpInterceptor {
   private handle401Error(request: HttpRequest<any>, next: HttpHandler) {
     if (!this.isRefreshing) {
       this.isRefreshing = true;
-
+  
       if (this.storageService.isLoggedIn()) {
         return this.authService.refreshToken().pipe(
           switchMap(() => {
             this.isRefreshing = false;
-
             return next.handle(request);
           }),
           catchError((error) => {
             this.isRefreshing = false;
-
-            if (error.status == '403') {
+  
+            if (error.status === 401 || error.status === 403) { // Correct status checks
               this.eventBusService.emit(new EventData('logout', null));
             }
-
+  
             return throwError(() => error);
           })
         );
       }
     }
-
+  
     return next.handle(request);
   }
-}
+}  
+
+//   private handle401Error(request: HttpRequest<any>, next: HttpHandler) {
+//     if (!this.isRefreshing) {
+//       this.isRefreshing = true;
+
+//       if (this.storageService.isLoggedIn()) {
+//         return this.authService.refreshToken().pipe(
+//           switchMap(() => {
+//             this.isRefreshing = false;
+
+//             return next.handle(request);
+//           }),
+//           catchError((error) => {
+//             this.isRefreshing = false;
+
+//             if (error.status == '403' || '401') {
+//               this.eventBusService.emit(new EventData('logout', null));
+//             }
+
+//             return throwError(() => error);
+//           })
+//         );
+//       }
+//     }
+
+//     return next.handle(request);
+//   }
+// }
 
 export const httpInterceptorProviders = [
   { provide: HTTP_INTERCEPTORS, useClass: HttpRequestInterceptor, multi: true },

@@ -27,17 +27,6 @@ export class LoginComponent implements OnInit {
     }
   }
 
-  // ngOnInit(): void {
-  //   this.authService.getAuthStatus().subscribe(isLoggedIn => {
-  //     if (isLoggedIn) {
-  //       this.roles = this.storageService.getUser().roles;
-  //       // Consider redirecting if already logged in
-  //       this.router.navigate(['/dashboard']); // Or another relevant route
-  //     } else if (!isLoggedIn) {
-  //       this.router.navigate(['/login']);
-  //     }
-  //   });
-  // }
 
   onSubmit(): void {
     const { username, password } = this.form;
@@ -45,6 +34,7 @@ export class LoginComponent implements OnInit {
     this.authService.login(username, password).subscribe({
       next: data => {
         this.storageService.saveUser(data);
+        this.storageService.saveToken(data.jwt); 
 
         this.isLoginFailed = false;
         this.isLoggedIn = true;
