@@ -28,6 +28,7 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.isLoggedIn = this.storageService.isLoggedIn();
+   
 
     if (this.isLoggedIn) {
       const user = this.storageService.getUser();
@@ -40,6 +41,7 @@ export class AppComponent {
     }
 
     this.eventBusSub = this.eventBusService.on('logout', () => {
+      console.log(this.isLoggedIn);
       this.logout();
     });
   }
@@ -60,9 +62,9 @@ export class AppComponent {
   logout(): void {
     this.authService.logout().subscribe({
       next: res => {
-        console.log(res);
         this.storageService.clean();
-        this.router.navigate(['/login']); // Redirect to login or any other route
+        window.location.reload();
+        // this.router.navigate(['/login']); // Redirect to login or any other route
       },
       error: err => {
         console.log(err);

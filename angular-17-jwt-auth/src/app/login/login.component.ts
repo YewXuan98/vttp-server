@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../_services/auth.service';
 import { StorageService } from '../_services/storage.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
@@ -17,7 +18,7 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   roles: string[] = [];
 
-  constructor(private authService: AuthService, private storageService: StorageService) { }
+  constructor(private authService: AuthService, private storageService: StorageService, private router: Router) { }
 
   ngOnInit(): void {
     if (this.storageService.isLoggedIn()) {
@@ -25,6 +26,18 @@ export class LoginComponent implements OnInit {
       this.roles = this.storageService.getUser().roles;
     }
   }
+
+  // ngOnInit(): void {
+  //   this.authService.getAuthStatus().subscribe(isLoggedIn => {
+  //     if (isLoggedIn) {
+  //       this.roles = this.storageService.getUser().roles;
+  //       // Consider redirecting if already logged in
+  //       this.router.navigate(['/dashboard']); // Or another relevant route
+  //     } else if (!isLoggedIn) {
+  //       this.router.navigate(['/login']);
+  //     }
+  //   });
+  // }
 
   onSubmit(): void {
     const { username, password } = this.form;
