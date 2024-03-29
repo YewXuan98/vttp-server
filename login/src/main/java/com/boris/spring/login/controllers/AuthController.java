@@ -2,9 +2,11 @@ package com.boris.spring.login.controllers;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +24,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.boris.spring.login.exception.TokenRefreshException;
 import com.boris.spring.login.models.ERole;
+import com.boris.spring.login.models.RefreshToken;
 import com.boris.spring.login.models.Role;
 import com.boris.spring.login.models.User;
 import com.boris.spring.login.payload.request.LoginRequest;
@@ -32,6 +36,7 @@ import com.boris.spring.login.payload.response.MessageResponse;
 import com.boris.spring.login.repository.RoleRepository;
 import com.boris.spring.login.repository.UserRepository;
 import com.boris.spring.login.security.jwt.JwtUtils;
+import com.boris.spring.login.security.services.RefreshTokenService;
 import com.boris.spring.login.security.services.UserDetailsImpl;
 
 //for Angular Client (withCredentials)
@@ -54,6 +59,9 @@ public class AuthController {
 
   @Autowired
   JwtUtils jwtUtils;
+
+  @Autowired
+  RefreshTokenService refreshTokenService;
 
   @PostMapping("/signin")
   public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
@@ -132,4 +140,51 @@ public class AuthController {
 
     return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
   }
+
+  @PostMapping("/signout")
+  public ResponseEntity<?> logoutUser() {
+    Object principle = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    // if (principle.toString() != "anonymousUser") {      
+    //   String userId = ((UserDetailsImpl) principle).getId();
+    //   refreshTokenService.deleteByUserId(userId);
+    // }
+
+    if  (principle.toString() != "anonymousUser") {
+      String userId = ((UserDetailsImpl) principle).getId();
+      Optional<User> user = userRepository.findById(userId);
+      
+      user.ifPresent(refreshTokenService::deleteByUserId);
+  }
+    
+    ResponseCookie jwtCookie = jwtUtils.getCleanJwtCookie();
+    ResponseCookie jwtRefreshCookie = jwtUtils.getCleanJwtRefreshCookie();
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+        .header(HttpHeaders.SET_COOKIE, jwtRefreshCookie.toString())
+        .body(new MessageResponse("You've been signed out!"));
+  }
+
+  @PostMapping("/refreshtoken")
+  public ResponseEntity<?> refreshtoken(HttpServletRequest request) {
+    String refreshToken = jwtUtils.getJwtRefreshFromCookies(request);
+    
+    if ((refreshToken != null) && (refreshToken.length() > 0)) {
+      return refreshTokenService.findByToken(refreshToken)
+          .map(refreshTokenService::verifyExpiration)
+          .map(RefreshToken::getUser)
+          .map(user -> {
+            ResponseCookie jwtCookie = jwtUtils.generateJwtCookie(user);
+            
+            return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(new MessageResponse("Token is refreshed successfully!"));
+          })
+          .orElseThrow(() -> new TokenRefreshException(refreshToken,
+              "Refresh token is not in database!"));
+    }
+    
+    return ResponseEntity.badRequest().body(new MessageResponse("Refresh Token is empty!"));
+  }
 }
+

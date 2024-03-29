@@ -3,6 +3,7 @@ import { Subscription } from 'rxjs';
 import { StorageService } from './_services/storage.service';
 import { AuthService } from './_services/auth.service';
 import { EventBusService } from './_shared/event-bus.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -19,6 +20,7 @@ export class AppComponent {
   eventBusSub?: Subscription;
 
   constructor(
+    private router: Router,
     private storageService: StorageService,
     private authService: AuthService,
     private eventBusService: EventBusService
@@ -42,13 +44,25 @@ export class AppComponent {
     });
   }
 
+  // logout(): void {
+  //   this.authService.logout().subscribe({
+  //     next: res => {
+  //       console.log(res);
+  //       this.storageService.clean();
+
+  //       window.location.reload();
+  //     },
+  //     error: err => {
+  //       console.log(err);
+  //     }
+  //   });
+  // }
   logout(): void {
     this.authService.logout().subscribe({
       next: res => {
         console.log(res);
         this.storageService.clean();
-
-        window.location.reload();
+        this.router.navigate(['/login']); // Redirect to login or any other route
       },
       error: err => {
         console.log(err);
