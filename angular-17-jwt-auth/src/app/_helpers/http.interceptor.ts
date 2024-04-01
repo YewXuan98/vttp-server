@@ -19,9 +19,15 @@ export class HttpRequestInterceptor implements HttpInterceptor {
   ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    req = req.clone({
-      withCredentials: true,
-    });
+     // Retrieve the JWT token from the storage service
+    const authToken = this.storageService.getToken();
+    // req = req.clone({
+    //   withCredentials: true,
+    // });
+    // Clone the request to add the new header.
+    const authReq = authToken ? req.clone({
+      setHeaders: { Authorization: `Bearer ${authToken}` }
+    }) : req;
 
     if (!req.url.includes('auth/signin') && !req.url.includes('auth/refreshtoken')) {
       if (this.storageService.isLoggedIn() && this.storageService.isTokenExpired()) {
@@ -29,7 +35,7 @@ export class HttpRequestInterceptor implements HttpInterceptor {
       }
   }
 
-    return next.handle(req).pipe(
+    return next.handle(authReq).pipe(
       catchError((error) => {
         if (
           error instanceof HttpErrorResponse &&
